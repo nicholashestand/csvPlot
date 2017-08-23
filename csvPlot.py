@@ -2,6 +2,9 @@
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+#from scipy.interpolate import UnivariateSpline as spline
+#from scipy.interpolate import interp1d as spline
+from scipy import interpolate as interpolate
 
 ##################################################
 
@@ -41,21 +44,25 @@ def get_user_args():
                     help='The tic spacing. x major, x minor' )
     parser.add_argument('--ytics', metavar='n', type=float, nargs=2,
                     help='The tic spacing. y major, y minor' )
-    parser.add_argument('--error', metavar='y/n', type=str, nargs=1,
+    parser.add_argument('--error', metavar='y/n', type=str, nargs='+',
                     help='Include error bars if present')
     parser.add_argument('--ecolor','-ec', metavar='color', type=str, nargs='+',
                     help='color for the error bars, if applicable' )
-    parser.add_argument('--fit', metavar='n', type=int, nargs=1,
-                    help='fit the data points with a spline of order n' )
+    parser.add_argument('--fit', metavar='n', type=float, nargs=1,
+                    help='fit the data points with a spline with smoothing parameter n' )
     parser.add_argument('--logplot', metavar='x/y/b', type=str, nargs=1,
                     help='log plot of x, y, or both' )
     parser.add_argument('--invplot', metavar='x/y/b', type=str, nargs=1,
                     help='inverse plot of x, y, or both' )
+    parser.add_argument('--linestyle', metavar='linestyle', type=str, nargs='+',
+                    help='The linestyle for the plot' )
+    parser.add_argument('--marker', metavar='marker', type=str, nargs='+',
+                    help='The marker for the plot' )
     return parser
 ##################################################
 
 # read in data and return in a numpy array
-def read_in_data(files, e='n'):
+def read_in_data(files, e=['n']*10):
     """Reads in two or three space separated columns from a data file.
         Returns a tuple of numpy arrays containing the x, y and error values.
         The latter is only included if the argument e='y'"""
@@ -69,8 +76,7 @@ def read_in_data(files, e='n'):
     for f in files:
         with open(f) as F:
             data.append(F.read())
-
-    # parse the data
+# parse the data
     for i in range(len(data)):
         # split data and get rid of the last blank row and comments
         data[i] = data[i].split('\n')[:-1]
@@ -82,7 +88,7 @@ def read_in_data(files, e='n'):
 
         xs.append( [float(row[0]) for row in data[i]] )
         ys.append( [float(row[1]) for row in data[i]] )
-        if e == 'y':
+        if e[i] == 'y':
             try:
                 es.append( [ float(row[2]) for row in data[i] ] )
             except:
@@ -108,8 +114,10 @@ args = get_user_args()
 
 # store the user arguments in variables
 files     = args.parse_args().files
-errplt    = args.parse_args().error[0] if args.parse_args().error else 'n'
+errplt    = args.parse_args().error if args.parse_args().error else ['n']*10
 linewidth = args.parse_args().linewidth if args.parse_args().linewidth else [1]*len(files)
+linestyle = args.parse_args().linestyle if args.parse_args().linestyle else ['']
+marker    = args.parse_args().marker if args.parse_args().marker else ['o']
 output    = args.parse_args().output if args.parse_args().output else None
 width     = args.parse_args().dimension[0] if args.parse_args().dimension else 3.3
 height    = args.parse_args().dimension[1] if args.parse_args().dimension else 2.5
@@ -162,16 +170,18 @@ if sy:
 plt.figure(1, figsize=(width, height), dpi=dpi )
 for i in range(len(y)):
     # error plot is a little different from regular
-    if errplt =='y':
+    if errplt[i] =='y':
         plt.errorbar( x[i], y[i], yerr=e[i], label=labels[i], linewidth=linewidth[i], 
-                color=color[i], fmt='o', capthick=linewidth[i], barsabove=False,
-                elinewidth=linewidth[i], ecolor=ecolor[i], markersize=3, capsize=3 )
+                linestyle=linestyle[i], color=color[i], fmt=marker[i], capthick=linewidth[i], 
+                barsabove=False, elinewidth=linewidth[i], ecolor=ecolor[i], markersize=3.5,
+                capsize=2.5 )
     else:
-        plt.plot( x[i], y[i], label=labels[i], linewidth=linewidth[i], color=color[i],
-                marker='o',linestyle='', markersize=3 )
-    if fit > 0:
-        z = np.polyfit(x[i], y[i], fit )
-        spl = np.poly1d(z)
+        plt.plot( x[i], y[i], label=labels[i], linewidth=linewidth[i], linestyle=linestyle[i],
+                color=color[i], marker=marker[i], markersize=3.5 )
+    if fit >= 0:
+        # order, must be for spline to work
+        order = np.argsort(x[i])
+        spl = interpolate.UnivariateSpline(x[i][order],y[i][order], s=fit)
         xs = np.linspace( x[i].min(), x[i].max(), num=100 )
         plt.plot( xs, spl(xs), linewidth=linewidth[i], color=color[i], linestyle='-' )
 
