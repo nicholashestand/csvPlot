@@ -130,7 +130,7 @@ if not color: # default color
 ecolor    = args.parse_args().ecolor
 if not ecolor: # default color
     ecolor = ['magenta','blue','cyan','green','orange','red'][0:len(files)]
-fit       = args.parse_args().fit[0] if args.parse_args().fit else 0
+fit       = args.parse_args().fit[0] if args.parse_args().fit else -1
 labels    = args.parse_args().labels
 if not labels:  # default labels 0, 1, 2, 3 if not given by user
     labels = range(len(files))
