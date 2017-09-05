@@ -12,7 +12,7 @@ from scipy import interpolate as interpolate
 # TODO: make fitting over a wider range so it is smoother
 # setup to take an argument of which file(s) the data is contained in
 def get_user_args():
-    """Read command line arguments and return as an argparse type"""
+    """Read command line arguments and return as an argparse type""" 
     parser = argparse.ArgumentParser(description='Plot file(s) specified by the user. '+\
              'The format of the files should be space delimated columns containing the x, '+\
              'y and yerror data.')
