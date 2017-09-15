@@ -58,6 +58,8 @@ def get_user_args():
                     help='The linestyle for the plot' )
     parser.add_argument('--marker', metavar='marker', type=str, nargs='+',
                     help='The marker for the plot' )
+    parser.add_argument('--hist', metavar='y/n', type=str, nargs=1,
+                    help='make a histogram' )
     return parser
 ##################################################
 
@@ -115,6 +117,7 @@ args = get_user_args()
 # store the user arguments in variables
 files     = args.parse_args().files
 errplt    = args.parse_args().error if args.parse_args().error else ['n']*10
+histplt   = args.parse_args().hist[0] if args.parse_args().hist else 'n'
 linewidth = args.parse_args().linewidth if args.parse_args().linewidth else [1]*len(files)
 linestyle = args.parse_args().linestyle if args.parse_args().linestyle else ['']
 marker    = args.parse_args().marker if args.parse_args().marker else ['o']
@@ -175,6 +178,9 @@ for i in range(len(y)):
                 linestyle=linestyle[i], color=color[i], fmt=marker[i], capthick=linewidth[i], 
                 barsabove=False, elinewidth=linewidth[i], ecolor=ecolor[i], markersize=3.5,
                 capsize=2.5 )
+    elif histplt =='y':
+        plt.bar( x[i], y[i], color=color[i], edgecolor=ecolor[i], align='center', 
+                 width=abs(x[i][0]-x[i][1]), label=labels[i] )
     else:
         plt.plot( x[i], y[i], label=labels[i], linewidth=linewidth[i], linestyle=linestyle[i],
                 color=color[i], marker=marker[i], markersize=3.5 )
