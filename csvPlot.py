@@ -60,6 +60,8 @@ def get_user_args():
                     help='The marker for the plot' )
     parser.add_argument('--hist', metavar='y/n', type=str, nargs=1,
                     help='make a histogram' )
+    parser.add_argument('--nolabels', metavar='y/n', type=str, nargs=1,
+                    help='dont show labels if y' )
     return parser
 ##################################################
 
@@ -88,18 +90,18 @@ def read_in_data(files, e=['n']*10):
         # save in x and y variables
         data[i] = [ row.split() for row in data[i] ]
 
-        xs.append( [float(row[0]) for row in data[i]] )
-        ys.append( [float(row[1]) for row in data[i]] )
+        xs.append( np.asarray([float(row[0]) for row in data[i]]) )
+        ys.append( np.asarray([float(row[1]) for row in data[i]]) )
         if e[i] == 'y':
             try:
-                es.append( [ float(row[2]) for row in data[i] ] )
+                es.append( np.asarray([ float(row[2]) for row in data[i] ]) )
             except:
                 # if no error column provided, just set to zero
-                es.append( [0.]*len(data[i]) )
+                es.append( np.asarray([0.]*len(data[i])) )
         else:
-            es.append( [0.]*len(data[i]) )
+            es.append( np.asarray([0.]*len(data[i])) )
 
-    return np.asarray(xs), np.asarray(ys), np.asarray(es)
+    return xs, ys, es
 
 ##################################################
        
@@ -116,11 +118,11 @@ args = get_user_args()
 
 # store the user arguments in variables
 files     = args.parse_args().files
-errplt    = args.parse_args().error if args.parse_args().error else ['n']*10
+errplt    = args.parse_args().error if args.parse_args().error else ['n']*len(files)
 histplt   = args.parse_args().hist[0] if args.parse_args().hist else 'n'
 linewidth = args.parse_args().linewidth if args.parse_args().linewidth else [1]*len(files)
-linestyle = args.parse_args().linestyle if args.parse_args().linestyle else ['']
-marker    = args.parse_args().marker if args.parse_args().marker else ['o']
+linestyle = args.parse_args().linestyle if args.parse_args().linestyle else ['-']*len(files)
+marker    = args.parse_args().marker if args.parse_args().marker else [' ']*len(files)
 output    = args.parse_args().output if args.parse_args().output else None
 width     = args.parse_args().dimension[0] if args.parse_args().dimension else 3.3
 height    = args.parse_args().dimension[1] if args.parse_args().dimension else 2.5
@@ -128,8 +130,9 @@ dpi       = 300
 xb        = args.parse_args().xb
 yb        = args.parse_args().yb
 color     = args.parse_args().color
+nolabels  = args.parse_args().nolabels[0] if args.parse_args().nolabels else 'n'
 if not color: # default color
-    color = ['magenta','blue','cyan','green','orange','red'][0:len(files)]
+    color = ['black','red','blue','green','purple','magenta','cyan','orange','yellow'][0:len(files)]
 ecolor    = args.parse_args().ecolor
 if not ecolor: # default color
     ecolor = ['magenta','blue','cyan','green','orange','red'][0:len(files)]
@@ -225,7 +228,8 @@ if ytics:
 # adjust the area to the left and right of the plot to fit the labels
 plt.subplots_adjust(bottom=0.2,left=0.20)
 # plot the curve legend
-plt.legend(prop={'size':10},frameon=False)
+if nolabels != 'y':
+    plt.legend(prop={'size':10},frameon=False)
 
 # adjust window if user has added bounds
 if xb:
