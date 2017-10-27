@@ -80,7 +80,7 @@ def read_in_data(files, e=['n']*10):
     for f in files:
         with open(f) as F:
             data.append(F.read())
-# parse the data
+    # parse the data
     for i in range(len(data)):
         # split data and get rid of the last blank row and comments
         data[i] = data[i].split('\n')[:-1]
@@ -148,8 +148,8 @@ if not ylabels: #
     ylabels = ['y']
 sx        = args.parse_args().sx
 sy        = args.parse_args().sy
-xtics      = args.parse_args().xtics
-ytics      = args.parse_args().ytics
+xtics     = args.parse_args().xtics
+ytics     = args.parse_args().ytics
 logplot   = args.parse_args().logplot[0] if args.parse_args().logplot else 'n'
 invplot   = args.parse_args().invplot[0] if args.parse_args().invplot else 'n'
 
