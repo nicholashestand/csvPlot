@@ -48,7 +48,7 @@ def get_user_args():
                     help='Include error bars if present')
     parser.add_argument('--ecolor','-ec', metavar='color', type=str, nargs='+',
                     help='color for the error bars, if applicable' )
-    parser.add_argument('--fit', metavar='n', type=float, nargs=1,
+    parser.add_argument('--fit', metavar='n', type=float, nargs='+',
                     help='fit the data points with a spline with smoothing parameter n' )
     parser.add_argument('--logplot', metavar='x/y/b', type=str, nargs=1,
                     help='log plot of x, y, or both' )
@@ -58,10 +58,19 @@ def get_user_args():
                     help='The linestyle for the plot' )
     parser.add_argument('--marker', metavar='marker', type=str, nargs='+',
                     help='The marker for the plot' )
+    parser.add_argument('--markersize', metavar='markersize', type=float, nargs='+',
+                    help='The marker size for the plot' )
     parser.add_argument('--hist', metavar='y/n', type=str, nargs=1,
                     help='make a histogram' )
     parser.add_argument('--nolabels', metavar='y/n', type=str, nargs=1,
                     help='dont show labels if y' )
+    parser.add_argument('--legendsize', metavar='size', type=int, nargs=1,
+                    help='scale the legend size' )
+    parser.add_argument('--label2', metavar='a,b,...', type=str, nargs=1,
+                    help='add a label to upper left to distinguish figures by a, b, etc')
+    parser.add_argument('--label2size', metavar='num', type=float, nargs=1,
+                    help='font size for label 2')
+
     return parser
 ##################################################
 
@@ -123,6 +132,7 @@ histplt   = args.parse_args().hist[0] if args.parse_args().hist else 'n'
 linewidth = args.parse_args().linewidth if args.parse_args().linewidth else [1]*len(files)
 linestyle = args.parse_args().linestyle if args.parse_args().linestyle else ['-']*len(files)
 marker    = args.parse_args().marker if args.parse_args().marker else [' ']*len(files)
+markersize= args.parse_args().markersize if args.parse_args().markersize else [3.5]*len(files)
 output    = args.parse_args().output if args.parse_args().output else None
 width     = args.parse_args().dimension[0] if args.parse_args().dimension else 3.3
 height    = args.parse_args().dimension[1] if args.parse_args().dimension else 2.5
@@ -131,12 +141,15 @@ xb        = args.parse_args().xb
 yb        = args.parse_args().yb
 color     = args.parse_args().color
 nolabels  = args.parse_args().nolabels[0] if args.parse_args().nolabels else 'n'
+label2    = args.parse_args().label2 if args.parse_args().label2 else None
+label2size= args.parse_args().label2size if args.parse_args().label2size else 10
+
 if not color: # default color
     color = ['black','red','blue','green','purple','magenta','cyan','orange','yellow'][0:len(files)]
 ecolor    = args.parse_args().ecolor
 if not ecolor: # default color
     ecolor = ['magenta','blue','cyan','green','orange','red'][0:len(files)]
-fit       = args.parse_args().fit[0] if args.parse_args().fit else -1
+fit       = args.parse_args().fit if args.parse_args().fit else [-1]*len(files)
 labels    = args.parse_args().labels
 if not labels:  # default labels 0, 1, 2, 3 if not given by user
     labels = range(len(files))
@@ -152,6 +165,7 @@ xtics     = args.parse_args().xtics
 ytics     = args.parse_args().ytics
 logplot   = args.parse_args().logplot[0] if args.parse_args().logplot else 'n'
 invplot   = args.parse_args().invplot[0] if args.parse_args().invplot else 'n'
+legendsize= args.parse_args().legendsize[0] if args.parse_args().legendsize else None
 
 # read the files and store data
 x, y, e = read_in_data( files, e=errplt )
@@ -171,7 +185,6 @@ if sy:
     e = scale_data( e, sy )
 
 ##################################################
-
 # make the plots
 plt.figure(1, figsize=(width, height), dpi=dpi )
 for i in range(len(y)):
@@ -179,18 +192,18 @@ for i in range(len(y)):
     if errplt[i] =='y':
         plt.errorbar( x[i], y[i], yerr=e[i], label=labels[i], linewidth=linewidth[i], 
                 linestyle=linestyle[i], color=color[i], fmt=marker[i], capthick=linewidth[i], 
-                barsabove=False, elinewidth=linewidth[i], ecolor=ecolor[i], markersize=3.5,
-                capsize=2.5 )
+                barsabove=False, elinewidth=linewidth[i], ecolor=ecolor[i], 
+                markersize=markersize[i], capsize=2.5 )
     elif histplt =='y':
         plt.bar( x[i], y[i], color=color[i], edgecolor=ecolor[i], align='center', 
                  width=abs(x[i][0]-x[i][1]), label=labels[i] )
     else:
         plt.plot( x[i], y[i], label=labels[i], linewidth=linewidth[i], linestyle=linestyle[i],
-                color=color[i], marker=marker[i], markersize=3.5 )
-    if fit >= 0:
+                color=color[i], marker=marker[i], markersize=markersize[i] )
+    if fit[i] >= 0:
         # order, must be for spline to work
         order = np.argsort(x[i])
-        spl = interpolate.UnivariateSpline(x[i][order],y[i][order], s=fit)
+        spl = interpolate.UnivariateSpline(x[i][order],y[i][order], s=fit[i])
         xs = np.linspace( x[i].min(), x[i].max(), num=100 )
         plt.plot( xs, spl(xs), linewidth=linewidth[i], color=color[i], linestyle='-' )
 
@@ -229,13 +242,22 @@ if ytics:
 plt.subplots_adjust(bottom=0.2,left=0.20)
 # plot the curve legend
 if nolabels != 'y':
-    plt.legend(prop={'size':10},frameon=False)
+    if legendsize:
+        plt.legend(prop={'size':legendsize},frameon=False)
+    else:
+        plt.legend(prop={'size':10},frameon=False)
 
 # adjust window if user has added bounds
 if xb:
    plt.xlim((xb[0],xb[1])) 
 if yb:
    plt.ylim((yb[0],yb[1])) 
+
+# add second label, as a, b, c if desired
+if label2:
+    ax = plt.gca()
+    ax.text(0.05, 0.95, label2[0], fontsize=label2size, transform=ax.transAxes, va='top')#, fontweight='bold' )
+
 
 # show the figure if no output file is specified, otherwise save it
 if output == None:
