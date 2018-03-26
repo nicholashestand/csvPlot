@@ -2,14 +2,16 @@
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-#from scipy.interpolate import UnivariateSpline as spline
-#from scipy.interpolate import interp1d as spline
 from scipy import interpolate as interpolate
 
 ##################################################
+#   Utility program built on matplotlib library
+#   to quickly plot files of the form:
+#   x, y, err
+#   from the command line
+##################################################
 
-# TODO: setup to allow user to change line style
-# TODO: make fitting over a wider range so it is smoother
+
 # setup to take an argument of which file(s) the data is contained in
 def get_user_args():
     """Read command line arguments and return as an argparse type""" 
@@ -97,7 +99,7 @@ def read_in_data(files, e=['n']*10):
         data[i] = [ row for row in data[i] if row[0] != "#" ]
 
         # save in x and y variables
-        data[i] = [ row.split() for row in data[i] ]
+        data[i] = [ row.replace(',',' ').split() for row in data[i] ]
 
         xs.append( np.asarray([float(row[0]) for row in data[i]]) )
         ys.append( np.asarray([float(row[1]) for row in data[i]]) )
